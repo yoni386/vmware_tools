@@ -1,0 +1,19 @@
+2020-10-20 00:04:14,917 DEBUG Disabling SSL certificate verification.
+2020-10-20 00:04:15,031 INFO Connecting to VC 172.17.30.5:443 with username administrator@vsphere.local
+2020-10-20 00:04:15,031 INFO Connecting to VC '172.17.30.5'
+2020-10-20 00:04:15,032 DEBUG Registering disconnect at exit
+2020-10-20 00:04:15,032 DEBUG Finding template Temp_1
+2020-10-20 00:04:15,050 INFO Template Temp_1 found
+2020-10-20 00:04:15,050 DEBUG Setting up pools and threads
+2020-10-20 00:04:15,058 DEBUG Pools created with 1 threads
+2020-10-20 00:04:15,059 DEBUG Creating thread specifications, this may take a while.
+2020-10-20 00:04:15,083 INFO Creating spec for vm DEV101
+2020-10-20 00:04:15,084 DEBUG vm_specs [{'si': 'vim.ServiceInstance:ServiceInstance', 'logger': <Logger __main__ (DEBUG)>, 'vm_name': 'DEV101', 'resource_pool_name': ['Resources'], 'folder_name': None, 'power_on': True, 'template': 'Temp_1', 'template_vm': 'vim.VirtualMachine:vm-6011', 'adapters_specs': [{'ipv4': '172.30.16.101', 'subnet': '255.255.255.0', 'ipv6': '', 'subnet_ipv6': '', 'dg': '172.30.16.1'}, {'ipv4': '172.30.15.101', 'subnet': '255.255.255.0', 'ipv6': '', 'subnet_ipv6': '', 'dg': ''}], 'cpu': 2, 'ram': 1, 'memory_reservation_locked_to_max': False, 'datastore': None, 'host_system': 'vim.HostSystem:host-13'}]
+2020-10-20 00:04:15,084 DEBUG THREAD DEV101 - started
+2020-10-20 00:04:15,084 INFO THREAD DEV101 - Trying to clone: Temp_1 to: DEV101
+2020-10-20 00:04:15,084 DEBUG THREAD DEV101 - Finding resource pool ['Resources']
+2020-10-20 00:04:15,093 DEBUG Checking resource pool Resources
+2020-10-20 00:04:15,095 CRITICAL THREAD DEV101 - Unable to find resource pool ['Resources']
+2020-10-20 00:04:15,095 INFO THREAD DEV101 - Resource pool ['Resources'] found
+2020-10-20 00:04:15,095 DEBUG Closing virtual machine clone pool
+2020-10-20 00:04:15,095 INFO Finished all tasks
