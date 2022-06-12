@@ -191,6 +191,99 @@ class VmOperations(object):
             print ('Caught vmodl fault : ' + error.msg)
             return 1
 
+def new_cluster(name, dc, spec=None):
+    """
+
+    :param spec: vim.cluster.ConfigSpecEx()
+    :param dc: vim.Datacenter
+    :type name: str
+    """
+    if spec is None:
+        spec = vim.cluster.ConfigSpecEx()
+        spec.drsConfig = vim.cluster.DrsConfigInfo()
+        # spec.drsConfig.defaultVmBehavior = fullyAutomated
+        spec.drsConfig.vmotionRate = 3
+        spec.drsConfig.enabled = True
+        spec.dasConfig = vim.cluster.DasConfigInfo()
+        spec.dasConfig.admissionControlEnabled = True
+        spec.dasConfig.vmMonitoring = 'vmMonitoringDisabled'
+        spec.dasConfig.admissionControlPolicy = vim.cluster.FailoverResourcesAdmissionControlPolicy()
+        spec.dasConfig.admissionControlPolicy.memoryFailoverResourcesPercent = 0
+        spec.dasConfig.admissionControlPolicy.cpuFailoverResourcesPercent = 0
+        spec.dasConfig.enabled = True
+        spec.dasConfig.hostMonitoring = 'enabled'
+        spec.vsanConfig = vim.vsan.cluster.ConfigInfo()
+        spec.vsanConfig.enabled = False
+        spec.dpmConfig = vim.cluster.DpmConfigInfo()
+        spec.inHciWorkflow = True
+
+    try:
+        return cluster.create_cluster(datacenter=dc, name=name, cluster_spec=spec)
+    except:
+        return None
+
+
+def set_cluster(cls, heartbeat_datastore=None, spec=None):
+    """
+
+    :type cls: vim.Cluster
+    :param heartbeat_datastore:
+    :param spec: vim.cluster.ConfigSpecEx()
+    """
+    if spec is None:
+        spec = vim.cluster.ConfigSpecEx()
+        spec.orchestration = vim.cluster.OrchestrationInfo()
+        spec.orchestration.defaultVmReadiness = vim.cluster.VmReadiness()
+        spec.orchestration.defaultVmReadiness.readyCondition = 'none'
+        spec.orchestration.defaultVmReadiness.postReadyDelay = 0
+        spec.drsConfig = vim.cluster.DrsConfigInfo()
+        spec.dasConfig = vim.cluster.DasConfigInfo()
+        spec.dasConfig.admissionControlEnabled = True
+        spec.dasConfig.defaultVmSettings = vim.cluster.DasVmSettings()
+        spec.dasConfig.defaultVmSettings.restartPriority = 'medium'
+        spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings = vim.cluster.VmComponentProtectionSettings()
+        spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings.vmStorageProtectionForPDL = 'restartAggressive'
+        spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings.vmReactionOnAPDCleared = 'none'
+        spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings.vmStorageProtectionForAPD = 'restartConservative'
+        spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings.vmTerminateDelayForAPDSec = 180
+        spec.dasConfig.defaultVmSettings.restartPriorityTimeout = 600
+        spec.dasConfig.defaultVmSettings.isolationResponse = 'none'
+        spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings = vim.cluster.VmToolsMonitoringSettings()
+        spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings.minUpTime = 120
+        spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings.maxFailures = 3
+        spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings.maxFailureWindow = -1
+        spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings.failureInterval = 30
+        spec.dasConfig.vmMonitoring = 'vmMonitoringDisabled'
+
+        spec.dasConfig.heartbeatDatastore = [] if heartbeat_datastore else heartbeat_datastore
+        # spec.dasConfig.HBDatastoreCandidatePolicy = 'allFeasibleDsWithUserPreference'
+        spec.dasConfig.admissionControlPolicy = vim.cluster.FailoverResourcesAdmissionControlPolicy()
+        spec.dasConfig.admissionControlPolicy.failoverLevel = 1
+        spec.dasConfig.admissionControlPolicy.autoComputePercentages = True
+        # spec.dasConfig.admissionControlPolicy.PMemAdmissionControlEnabled = False
+        spec.dasConfig.admissionControlPolicy.memoryFailoverResourcesPercent = 0
+        spec.dasConfig.admissionControlPolicy.cpuFailoverResourcesPercent = 0
+        spec.dasConfig.admissionControlPolicy.resourceReductionToToleratePercent = 100
+        spec.dasConfig.vmComponentProtecting = 'enabled'
+        spec.dasConfig.enabled = True
+        spec.dasConfig.hostMonitoring = 'enabled'
+        spec.dpmConfig = vim.cluster.DpmConfigInfo()
+    modify = True
+
+    # this creates reconfigure task the set cluster spec
+    cls.ReconfigureComputeResource_Task(spec, modify)
+
+
+def tear_down(si, name=""):
+    # si.getSupportedOption()  # OptionManager-VpxSettings
+    changedValue_0 = vim.option.OptionValue()
+    changedValue_0.value = 'False'
+    changedValue_0.key = 'config.vcls.clusters.domain-c6867.enabled'
+    changedValue = [changedValue_0]
+    opt_mgr = si.RetrieveContent().setting
+    opt_mgr.UpdateValues(changedValue)
+    # si.UpdateOptions(changedValue)  # OptionManager-VpxSettings
+
 
 def main():
     """
@@ -224,85 +317,11 @@ def main():
     # logger.info('clusters are {}'.format([cl.name for cl in clusters]))
     # logger.info('datastores are {}'.format([ds.name for ds in datastores]))
 
+    try:
+        tear_down(si)
 
     # if dcName in datacenters:
     #     logger.warning('datacenter already exist {}'.format(dcName))
-
-
-    try:
-        # name = 'ClusterExample0'
-        spec = vim.cluster.ConfigSpecEx()
-        spec.drsConfig = vim.cluster.DrsConfigInfo()
-        # spec.drsConfig.defaultVmBehavior = fullyAutomated
-        spec.drsConfig.vmotionRate = 3
-        spec.drsConfig.enabled = True
-        spec.dasConfig = vim.cluster.DasConfigInfo()
-        spec.dasConfig.admissionControlEnabled = True
-        spec.dasConfig.vmMonitoring = 'vmMonitoringDisabled'
-        spec.dasConfig.admissionControlPolicy = vim.cluster.FailoverResourcesAdmissionControlPolicy()
-        spec.dasConfig.admissionControlPolicy.memoryFailoverResourcesPercent = 0
-        spec.dasConfig.admissionControlPolicy.cpuFailoverResourcesPercent = 0
-        spec.dasConfig.enabled = True
-        spec.dasConfig.hostMonitoring = 'enabled'
-        spec.vsanConfig = vim.vsan.cluster.ConfigInfo()
-        spec.vsanConfig.enabled = False
-        spec.dpmConfig = vim.cluster.DpmConfigInfo()
-        spec.inHciWorkflow = True
-
-        if not dry_run:
-            if dc is None:
-                logger.info('Datacenter is None. Making new DC: {}'.format(dcName))
-                dc = datacenter.create_datacenter(dc_name=dcName, service_instance=si)
-            # TODO: Validate if dc is None then cl is None or live whiten another dc
-            if cl is None:
-                logger.info('Cluster is None. Making new CL: {}'.format(clName))
-                cl = cluster.create_cluster(datacenter=dc, name=clName, cluster_spec=spec)
-
-            # print("created DC and cluster")
-
-            spec = vim.cluster.ConfigSpecEx()
-            spec.orchestration = vim.cluster.OrchestrationInfo()
-            spec.orchestration.defaultVmReadiness = vim.cluster.VmReadiness()
-            spec.orchestration.defaultVmReadiness.readyCondition = 'none'
-            spec.orchestration.defaultVmReadiness.postReadyDelay = 0
-            spec.drsConfig = vim.cluster.DrsConfigInfo()
-            spec.dasConfig = vim.cluster.DasConfigInfo()
-            spec.dasConfig.admissionControlEnabled = True
-            spec.dasConfig.defaultVmSettings = vim.cluster.DasVmSettings()
-            spec.dasConfig.defaultVmSettings.restartPriority = 'medium'
-            spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings = vim.cluster.VmComponentProtectionSettings()
-            spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings.vmStorageProtectionForPDL = 'restartAggressive'
-            spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings.vmReactionOnAPDCleared = 'none'
-            spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings.vmStorageProtectionForAPD = 'restartConservative'
-            spec.dasConfig.defaultVmSettings.vmComponentProtectionSettings.vmTerminateDelayForAPDSec = 180
-            spec.dasConfig.defaultVmSettings.restartPriorityTimeout = 600
-            spec.dasConfig.defaultVmSettings.isolationResponse = 'none'
-            spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings = vim.cluster.VmToolsMonitoringSettings()
-            spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings.minUpTime = 120
-            spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings.maxFailures = 3
-            spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings.maxFailureWindow = -1
-            spec.dasConfig.defaultVmSettings.vmToolsMonitoringSettings.failureInterval = 30
-            spec.dasConfig.vmMonitoring = 'vmMonitoringDisabled'
-            spec.dasConfig.heartbeatDatastore = []
-            # spec.dasConfig.HBDatastoreCandidatePolicy = 'allFeasibleDsWithUserPreference'
-            spec.dasConfig.admissionControlPolicy = vim.cluster.FailoverResourcesAdmissionControlPolicy()
-            spec.dasConfig.admissionControlPolicy.failoverLevel = 1
-            spec.dasConfig.admissionControlPolicy.autoComputePercentages = True
-            # spec.dasConfig.admissionControlPolicy.PMemAdmissionControlEnabled = False
-            spec.dasConfig.admissionControlPolicy.memoryFailoverResourcesPercent = 0
-            spec.dasConfig.admissionControlPolicy.cpuFailoverResourcesPercent = 0
-            spec.dasConfig.admissionControlPolicy.resourceReductionToToleratePercent = 100
-            spec.dasConfig.vmComponentProtecting = 'enabled'
-            spec.dasConfig.enabled = True
-            spec.dasConfig.hostMonitoring = 'enabled'
-            spec.dpmConfig = vim.cluster.DpmConfigInfo()
-            modify = True
-
-            logger.info('Cluster: {} configSpec will be done'.format(cl.name))
-            # logger.debug('Cluster: {} configSpec: {}'.format(cl.name, spec))
-
-            # this creates reconfigure task the set cluster spec
-            cl.ReconfigureComputeResource_Task(spec, modify)
 
         logger.info('Dry Run mode') if dry_run else None
 
