@@ -158,9 +158,9 @@ def get_args():
                         type=int,
                         required=False,
                         action='store',
-                        default=1,
+                        default=1024,
                         dest='ram',
-                        help='RAM Size in GB')
+                        help='RAM Size in MB')
 
     parser.add_argument('-I', '--ip-range',
                         required=False,
@@ -186,17 +186,6 @@ def get_args():
 
 
 args = get_args()
-
-#
-# def vm_clone_handler_wrapper(args):
-#     """
-#     Wrapping around clone vm_clone_handler
-#     """
-#     return vm_clone_handler(**args)
-
-
-# def vm_clone_handler(si, logger, vm_name, resource_pool_name, folder_name, power_on, template, template_vm, ips,
-#                      ds_name, cpu, ram, memory_reservation_locked_to_max, nocustos):
 
 
 def vm_clone_handler(args):
@@ -252,8 +241,6 @@ def vm_clone_handler(args):
     # Creating necessary specs
     logger.debug('THREAD %s - Creating relocate spec' % vm_name)
 
-    # datastore = get_obj(si, [vim.Datastore], ds_name)
-
     # ips = iprange('10.0.0.1', '10.0.0.5')  -> temp debug
 
     relocate_spec = vim.vm.RelocateSpec()
@@ -262,13 +249,6 @@ def vm_clone_handler(args):
     if host_system:
         relocate_spec.host = host_system
         logger.debug('Clone VM {} to Esx host {}'.format(vm_name, host_system))
-
-    # relocate_spec.pool = resource_pool
-
-    # ResourceAllocationInfo resources reservation
-    # res_alloc = vim.ResourceAllocationInfo()
-    # mem_res = res_alloc
-    # mem_res.reservation = ram * 1024
 
     config_spec = vim.vm.ConfigSpec()
     config_spec.numCPUs = cpu
@@ -280,7 +260,6 @@ def vm_clone_handler(args):
 
     clonespec = vim.vm.CloneSpec()
     clonespec.location = relocate_spec
-    # clonespec.powerOn = True  -> temp pending to delete
 
     if adapters_specs is not None:
 
@@ -294,20 +273,15 @@ def vm_clone_handler(args):
             else:
                 guest_map.adapter.ip = vim.vm.customization.FixedIp()
                 guest_map.adapter.ip.ipAddress = adapter_spec['ipv4']
-
                 guest_map.adapter.subnetMask = str(adapter_spec['subnet'])
 
                 if adapter_spec['ipv6']:
 
                     try:
                         guest_map.adapter.ipV6Spec = vim.vm.customization.IPSettings.IpV6AddressSpec()
-
                         ipv6_spec = vim.vm.customization.FixedIpV6()
-
                         ipv6_spec.ipAddress = str(adapter_spec['ipv6'])
-
                         ipv6_spec.subnetMask = adapter_spec['subnet_ipv6']
-
                         guest_map.adapter.ipV6Spec.ip = [ipv6_spec]
                     except ValueError:
                         pass
@@ -345,10 +319,7 @@ def vm_clone_handler(args):
 
     if resource_pool is not None:
         logger.debug('THREAD %s - Resource pool found, using' % vm_name)
-        # relocate_spec = vim.vm.RelocateSpec(pool=resource_pool) > temp pending to delete
-        # relocate_spec.pool = resource_pool -> temp pending to delete
 
-        # relocate_spec.pool = resource_pool -> temp pending to delete
     else:
         logger.debug('THREAD %s - No resource pool found, continuing without it' % vm_name)
         # relocate_spec = vim.vm.RelocateSpec() -> temp pending to delete
@@ -356,21 +327,6 @@ def vm_clone_handler(args):
         relocate_spec.pool = resource_pool
 
         logger.debug('THREAD %s - Creating clone spec' % vm_name)
-
-    # print clonespec -> temp debug pending to delete
-
-    # find_vm = False
-
-    # if find_vm(si, logger, vm_name, True):
-    #     logger.warning('THREAD %s - Virtual machine already exists, not creating' % vm_name)
-    #     run_loop = False
-    # else:
-    #     logger.debug('THREAD %s - Creating clone task' % vm_name)
-    #
-    #     task = template_vm.Clone(folder=folder, name=vm_name, spec=clonespec)
-    #
-    #     logger.info('THREAD %s - Cloning task created' % vm_name)
-    #     logger.info('THREAD %s - Checking task for completion. This might take a while' % vm_name)
 
     task = template_vm.Clone(folder=folder, name=vm_name, spec=clonespec)
     # tasks = []
@@ -383,9 +339,6 @@ def vm_clone_handler(args):
             logger.info('THREAD %s - Cloned and running' % vm_name)
 
             vm = info.result
-
-            # tasks.append(task.info)
-            # tasks.append(task.info.result)
 
             run_loop = False
 
