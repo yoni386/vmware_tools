@@ -35,7 +35,7 @@ def vc_si(args):
     password = args.password[0]
     port = args.port[0]
 
-    # TODO ssl isue on py6
+    # TODO ssl issue on py6
     # import ssl
     # ssl._create_default_https_context = ssl._create_unverified_context
 

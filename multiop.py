@@ -1,8 +1,9 @@
 
 
-from fnc1 import *
-from fnc2 import *
+# from fnc1 import *
+from common_helpers import *
 from cls_operations import Operation
+from pyVmomi import vim, vmodl
 import re
 import logging
 
@@ -111,61 +112,6 @@ def get_args():
     return parser.parse_args()
 
 
-# class Builder_old(object):
-#
-#     def __init__(self, vms, operations, dry_run):
-#         self.vms = vms
-#         self.operations = operations
-#         self.dry_run = dry_run
-#
-#     def operation_builder(self):
-#         """
-#
-#         :return:
-#         """
-#         array = []
-#         for vm in self.vms:
-#             for operation in self.operations:
-#
-#                 if operation == 'off':
-#                     array.append({'vm': vm, 'task': vm.PowerOffVM_Task,
-#                                   'log': 'Powering Off VM {}',
-#                                   'dry_run': self.dry_run})
-#
-#                 if operation == 'on':
-#                     array.append({'vm': vm,
-#                                   'task': vm.PowerOnVM_Task,
-#                                   'log': 'Powering On VM {}',
-#                                   'dry_run': self.dry_run})
-#
-#                 if operation == 'del':
-#                     array.append({'vm': vm,
-#                                   'task': vm.Destroy_Task,
-#                                   'log': 'Destroy VM {}',
-#                                   'dry_run': self.dry_run})
-#         # return array
-
-
-# class OperationsFactory(object):
-#     def __init__(self, vm, operation):
-#         self.vm = vm
-#         self.operation = operation
-#
-#     def cls_mapper(self):
-#         target_class = self.operation.capitalize()
-#         return globals()[target_class](self.vm)
-
-
-# class ShutdownOperation(Operation):
-#     _factory_id = 'shutdown'
-#
-#     def __init__(self, name):
-#         super(ShutdownOperation, self).__init__(name)
-
-# Operation.create('on', 'vm1').execute()
-# Operation.create('on', 'vm2').execute()
-
-
 class Builder(object):
     def __init__(self, vms, operations, dry_run):
         self.vms = vms
@@ -183,24 +129,6 @@ class Builder(object):
                 array.append({'vm': vm, 'task': obj_op.task,
                               'log': obj_op.logger_string,
                               'dry_run': self.dry_run})
-
-                # array.append(operation_obj.create_operation(operation).get_operation())
-                # if operation == 'off':
-                #     array.append({'vm': vm, 'task': vm.PowerOffVM_Task,
-                #                   'log': 'Powering Off VM {}',
-                #                   'dry_run': self.dry_run})
-                #
-                # if operation == 'on':
-                #     array.append({'vm': vm,
-                #                   'task': vm.PowerOnVM_Task,
-                #                   'log': 'Powering On VM {}',
-                #                   'dry_run': self.dry_run})
-                #
-                # if operation == 'del':
-                #     array.append({'vm': vm,
-                #                   'task': vm.Destroy_Task,
-                #                   'log': 'Destroy VM {}',
-                #                   'dry_run': self.dry_run})
         return array
 
 
@@ -209,77 +137,6 @@ class VmOperations(object):
         self.args = args
         self.si = si
 # TODO => check if si will be created in main or class or while init obj build        # self.si = vc_si(self.args)
-
-    # def power_on(self, vm):
-    #     """
-    #     PowerOn VM
-    #     :param vm: vm object
-    #     :return: task
-    #     """
-    #     try:
-    #         self.logger.debug('Powering On VM {}'.format(vm.name))
-    #         task = vm.PowerOnVM_Task()
-    #         wait_for_tasks(self.si, [task])
-    #
-    #     except vmodl.MethodFault as error:
-    #         print ('Caught vmodl fault : ' + error.msg)
-    #         return 1
-    #
-    #     return task
-    #
-    # def power_off(self, vm):
-    #     """
-    #     Poweroff VM
-    #     :param vm: vm object
-    #     :return: task
-    #     """
-    #     try:
-    #         self.logger.debug('Powering Off VM {}'.format(vm.name))
-    #         task = vm.PowerOffVM_Task()
-    #         wait_for_tasks(self.si, [task])
-    #
-    #     except vmodl.MethodFault as error:
-    #         print ('Caught vmodl fault : ' + error.msg)
-    #         return 1
-    #
-    #     return task
-    #
-    # def destroy_vm(self, vm):
-    #     """
-    #     Destroy VM
-    #     :param vm: vm object
-    #     :return: task
-    #     """
-    #     self.logger.debug('Destroy VM {}'.format(vm.name))
-    #     try:
-    #
-    #         task = vm.Destroy_Task()
-    #         wait_for_tasks(self.si, [task])
-    #     except vmodl.MethodFault as error:
-    #         print ('Caught vmodl fault : ' + error.msg)
-    #         return 1
-    #
-    #     return task
-    #
-    # def power_off_delete(self, vm):
-    #     try:
-    #         self.power_off(vm)
-    #         self.destroy_vm(vm)
-    #     except vmodl.MethodFault as error:
-    #         print ('Caught vmodl fault : ' + error.msg)
-    #         return 1
-
-    # def call_fun(self, *kwargs):
-    #     print ('\n \n \n')
-    #     print (kwargs)
-    #     # print (kwargs[0]['operation'])
-    #     print ('\n \n \n')
-    #     # print (1111)
-    #     # print (kwargs.vms)
-    #     # print (kwargs.operations)
-    #     # pass
-    #
-    #     # return
 
     def multi_oper(self, args):
         """
@@ -296,7 +153,7 @@ class VmOperations(object):
                 return task
 
         except vmodl.MethodFault as error:
-            print ('Caught vmodl fault : ' + error.msg)
+            print('Caught vmodl fault : ' + error.msg)
             return 1
 
 
@@ -307,13 +164,10 @@ def main():
 
     args = get_args()
     si = vc_si(args)
-    # amount = args.amount[0]
     basename = None
     if args.basename:
         basename = args.basename[0]
     debug = args.debug
-    # log_file = None
-    # host_system_name = args.host_system_name if args.host_system_name else None
     threads = args.threads[0]
     verbose = args.verbose
     dry_run = args.dry_run if args.dry_run else False
@@ -329,70 +183,7 @@ def main():
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log_level)
     logger = logging.getLogger(__name__)
 
-    # logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=log_level)
-
-    # logging.basicConfig(level=logging.WARNING)
-    #
-    # if debug:
-    #     log_level = logging.DEBUG
-    # elif verbose:
-    #     log_level = logging.INFO
-    # else:
-    #     log_level = logging.WARNING
-    #
-    # if log_file:
-    #     logging.basicConfig(filename=log_file, format='%(asctime)s %(levelname)s %(message)s', level=log_level)
-
-    # logs as logging.DEBUG
-    # logger = logging.getLogger(__name__)
-
-
-    # try:
-    #     # for operation in operations:
-    #     #     print (operation)
-    #     # ips_trusted = [operation[0], operation[1]]
-    #     # ips_fast = generate_ip_range(operation[2], ip_range[3])
-    # except:
-    #     pass
-
-    # def power_off(vm):
-    #     """
-    #     :param vm:
-    #     :return:
-    #     """
-
-    #     try:
-    #         logger.debug('Powering Off VM {}'.format(vm.name))
-    #         task = vm.PowerOffVM_Task()
-    #         wait_for_tasks(si, [task])
-    #
-    #     except vmodl.MethodFault as error:
-    #         print ('Caught vmodl fault : ' + error.msg)
-    #         return 1
-    #     return task
-
-    # def destroy_vm(vm):
-    #     """
-    #     :param vm:
-    #     :return:
-    #     """
-    #     logger.debug('Destroy VM {}'.format(vm.name))
-    #     try:
-    #
-    #         task = vm.Destroy_Task()
-    #         wait_for_tasks(si, [task])
-    #     except vmodl.MethodFault as error:
-    #         print ('Caught vmodl fault : ' + error.msg)
-    #         return 1
-
-    #     return task
-
-    # def power_off_delete(vm):
-    #     power_off(vm)
-    #     destroy_vm(vm)
-
     try:
-
         obj_vm = VirtualMachine()
         vo = VmOperations(args, si)
         pool = ThreadPool(threads)
@@ -404,55 +195,8 @@ def main():
 
         vms = [vm for vm in ls_all_vms if re.match(basename, vm.name) and vm.name not in ls_exclude_vms]
 
-        # def builder(vms, operations):
-        #     array = []
-        #
-        #     for vm in vms:
-        #         for operation in operations:
-        #
-        #             if operation == 'off':
-        #                 array.append({'vm': vm, 'task': vm.PowerOffVM_Task,
-        #                               'log': 'Powering Off VM {}',
-        #                               'dry_run': dry_run})
-        #
-        #             if operation == 'on':
-        #                 array.append({'vm': vm,
-        #                               'task': vm.PowerOnVM_Task,
-        #                               'log': 'Powering On VM {}',
-        #                               'dry_run': dry_run})
-        #
-        #             if operation == 'del':
-        #                 array.append({'vm': vm,
-        #                               'task': vm.Destroy_Task,
-        #                               'log': 'Destroy VM {}',
-        #                               'dry_run': dry_run})
-        #     return array
-
-        # array = builder(vms, operations)
         obj_array = Builder(vms, operations, dry_run)
         array = obj_array.operation_builder()
-
-        # array = []
-        #
-        # for vm in vms:
-        #     for operation in operations:
-        #
-        #         if operation == 'off':
-        #             array.append({'vm': vm, 'task': vm.PowerOffVM_Task,
-        #                           'log': 'Powering Off VM {}',
-        #                           'dry_run': dry_run})
-        #
-        #         if operation == 'on':
-        #             array.append({'vm': vm,
-        #                           'task': vm.PowerOnVM_Task,
-        #                           'log': 'Powering On VM {}',
-        #                           'dry_run': dry_run})
-        #
-        #         if operation == 'del':
-        #             array.append({'vm': vm,
-        #                           'task': vm.Destroy_Task,
-        #                           'log': 'Destroy VM {}',
-        #                           'dry_run': dry_run})
 
         logger.info('Dry Run mode') if dry_run else None
         logger.info('Number of VMs is {}'.format(len(vms)))
@@ -480,6 +224,7 @@ def main():
     except KeyboardInterrupt:
         logger.exception('Received interrupt, exiting')
         return 1
+
 
 if __name__ == "__main__":
     main()

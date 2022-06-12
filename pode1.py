@@ -1,9 +1,9 @@
-from fnc1 import *
-from fnc2 import *
+from common_helpers import *
 from cls_operations import Operation
 import re
 import logging
 from operator import attrgetter
+from pyVmomi import vim, vmodl
 
 __author__ = 'Yoni Shperling'
 
@@ -217,7 +217,7 @@ def main():
         ls_exclude_vms = ['Vc1', 'Dc1']
         ls_exclude_vms.extend(exclude_vms) if exclude_vms else None
 
-        operation_dst = None
+        operation_dst = si
 
         if args.hostsystem:
             obj_host = Host()
@@ -237,6 +237,8 @@ def main():
                                                                                     [vm.name for vm in vms[:max_vms]]))
                 vms = vms[:max_vms]
 
+        opers = ["slob.create", "slob.reindex", "slob.drop"]
+
         obj_array = Builder(operations, vms, dry_run, operation_dst)
         array = obj_array.operation_builder()
 
@@ -250,11 +252,15 @@ def main():
 
         return_threads = []
         if len(vms):
-            thread = pool.map(vo.multi_oper, array, chunksize=len(operations))
-            return_threads.extend(thread)
-            logger.debug('Closing pool')
-            pool.close()
-            pool.join()
+            try:
+                thread = pool.map(vo.multi_oper, array, chunksize=len(operations))
+                return_threads.extend(thread)
+                logger.debug('Closing pool')
+                # pool.close()
+                pool.join()
+                pool.close()
+            except:
+                pass
 
         else:
             logger.info('Number of VMs is 0, exiting')

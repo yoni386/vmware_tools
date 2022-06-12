@@ -1,5 +1,7 @@
 import inspect
 from abc import ABCMeta, abstractmethod
+
+import pyVmomi
 from pyVmomi import vim, vmodl
 
 
@@ -204,3 +206,47 @@ class OperationvNnicChangeMac(Operation):
 
     def task(self):
         return self.vm.ReconfigVM_Task(self.config_spec)
+
+class OperationVMRemoteCmd(Operation):
+    _factory_id = 'rcmd'
+
+    def __init__(self, vm, operation_dst, *args):
+        super(OperationVMRemoteCmd, self).__init__('rcmd', vm)
+        self.vm = vm
+        self.cmd = "Future"
+        self.si = operation_dst
+        self.logger_string = 'Operation: {} VM: {} cmd : {}'.format(self.operation,
+                                                                       self.vm.name,
+                                                                       self.cmd)
+
+    def task(self):
+
+        # Credentials used to login to the guest system
+        creds = pyVmomi.vim.vm.guest.NamePasswordAuthentication(
+            username='root',
+            password='Password123!'
+        )
+
+        pm = self.si.content.guestOperationsManager.processManager
+
+        ps = vim.vm.guest.ProcessManager.ProgramSpec(
+            programPath="/usr/bin/fio",
+            # programPath="/opt/io/nvme_tcp_repro/vdbench/vdbench",
+            # arguments="-f /opt/io/nvme_tcp_repro/vdbench/ioExt"
+            # arguments="--ioengine=libaio --bs=1-512k --iodepth=32 --rw=randwrite --size=40G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --time_based --runtime=9555"
+            # arguments="--ioengine=libaio --bs=32-512k --iodepth=128 --rw=randwrite --size=40G --direct=1 --numjobs=1 --name=io1 --filename=/dev/sdb --time_based --runtime=555"
+            # arguments="--ioengine=libaio --bs=1k-512k --iodepth=128 --rw=randwrite --size=100G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --time_based --runtime=5"
+            # arguments="--ioengine=libaio --bs=1m --iodepth=128 --rw=randtrim --size=10G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=36"
+            # arguments="--ioengine=libaio --bs=1m --iodepth=128 --rw=randtrim --size=18G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=3600"
+            # arguments="--ioengine=libaio --bs=1m --iodepth=128 --rw=readwrite --size=18G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=200"
+            # arguments="--ioengine=libaio --bs=1k-1m --iodepth=128 --rw=readwrite --size=88G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=200"
+            # arguments="--ioengine=libaio --bs=1m --iodepth=128 --rw=randwrite --size=18G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=360"
+            # arguments="--ioengine=libaio --bs=1-16k --iodepth=32 --rw=readwrite --size=8G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=860"
+            # arguments="--ioengine=libaio --bs=1-16k --iodepth=32 --rw=trimwrite --size=8G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=8"
+            arguments="--ioengine=libaio --bs=1-256k --iodepth=128 --rw=trimwrite --size=80G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=8"
+            # arguments="--ioengine=libaio --bs=1-16k --iodepth=32 --rw=readwrite --size=8G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --filename=/dev/nvme1n1 --filename=/dev/nvme1n2 --filename=/dev/nvme2n1 --filename=/dev/nvme2n2 --time_based --runtime=8"
+            # arguments="--ioengine=libaio --bs=1k --iodepth=64 --rw=randwrite --size=10G --direct=1 --numjobs=1 --name=io1 --filename=/dev/nvme0n1 --time_based --runtime=115"
+        )
+
+        # pm.StartProgramInGuest(self.vm, creds, ps)
+        return pm.StartProgramInGuest(self.vm, creds, ps)
